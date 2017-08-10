@@ -9,3 +9,5 @@ transition: "zoom"
 
 ---
 
+multi-paradigm, functional first
+quick-sort
