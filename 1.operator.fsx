@@ -1,6 +1,11 @@
 open System
 
-let (%%) a b = (a + b/2) / b * b
-let round a b = (a + b/2) / b * b
+let round interval value = (value + interval/2) / interval * interval
+let (>-*-<) interval value = round interval value
 
-round 51 100 = 51 %% 100
+let withFunc = round 100 51
+let withOp = 100 >-*-< 51
+let withOpAsFunc = (>-*-<) 100 51
+
+let (|>) a f = f a
+

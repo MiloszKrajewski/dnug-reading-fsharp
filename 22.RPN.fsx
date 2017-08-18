@@ -1,13 +1,15 @@
+open System
+
 type Token =
     | Symbol of string
     | Number of float
-    static member Parse(t: string) =
-        match System.Double.TryParse(t) with | true, v -> Number v | _ -> Symbol t
+    static member Parse t =
+        match Double.TryParse(t) with | true, v -> Number v | _ -> Symbol t
 
 let split (text: string) = text.Split([|' '|])
 let tokenize text = text |> split |> Seq.map Token.Parse
 
-let eval token stack =
+let evaluate stack token =
     match token, stack with
     | Symbol "+", a :: b :: stack -> (b + a) :: stack
     | Symbol "*", a :: b :: stack -> (b * a) :: stack
@@ -19,5 +21,5 @@ let eval token stack =
 
 "2 ~ 3 +"
 |> tokenize
-|> Seq.fold (fun stack token -> eval token stack) []
+|> Seq.fold evaluate []
 |> Seq.exactlyOne
