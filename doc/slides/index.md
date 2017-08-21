@@ -112,7 +112,7 @@ but it is easier to read
 
 ---
 
-As scope of temp variable is minimal, 
+As scope of temp variable is minimal,
 we can use just `t`:
 
 ```fsharp
@@ -162,7 +162,7 @@ const nothing = undefined // null? {}?
 
 ---
 
-Because `void` is not a real type in C#, 
+Because `void` is not a real type in C#,
 lot of generic types and related methods are implemented twice:
 
 * `Task` and `Task<T>`
@@ -176,11 +176,11 @@ while:
 ---
 
 ```csharp
-void Forgive(Action action) { 
+void Forgive(Action action) {
     try { action(); } catch { /* ignore */ }
 }
 
-T Forgive(Func<T> action) { 
+T Forgive(Func<T> action) {
     try { return action(); } catch { return default(T); }
 }
 
@@ -202,11 +202,11 @@ public interface IServiceRestHelper
         IRestRequest request, ServiceType serviceType, int timeout);
 
     Task<IRestResponse<T>> SendRequest<T>(
-        IRestRequest request, ServiceType serviceType) 
+        IRestRequest request, ServiceType serviceType)
         where T : new();
 
     Task<IRestResponse<T>> SendRequest<T>(
-        IRestRequest request, ServiceType serviceType, int timeout) 
+        IRestRequest request, ServiceType serviceType, int timeout)
         where T : new();
 }
 ```
@@ -221,8 +221,8 @@ with `void` and `nullable` types, it would be just:
 public interface IServiceRestHelper
 {
     Task<IRestResponse<T>> SendRequest<T>(
-        IRestRequest request, 
-        ServiceType serviceType, 
+        IRestRequest request,
+        ServiceType serviceType,
         TimeSpan? timeout = null);
 }
 ```
@@ -309,7 +309,7 @@ Every function has one argument and result:
 | `Action`        | `Func<void, void>`     |
 | `Action<T>`     | `Func<T, void>`        |
 | `Func<T>`       | `Func<void, T>`        |
-| `Func<A, B, C>` | `Func<Tuple<A, B>, C>` | 
+| `Func<A, B, C>` | `Func<Tuple<A, B>, C>` |
 | `Func<A, B, C>` | `Func<A, Func<B, C>>`  |
 
 ---
@@ -414,7 +414,7 @@ let yeah = multiply (5, 40) // int = 200
 ## Operators (are functions)
 
 ```fsharp
-let roundUpTo interval value = 
+let roundUpTo interval value =
     (value + interval - 1) / interval * interval
 roundUpTo 10 9 // 10
 roundUpTo 10 11 // 20
@@ -456,11 +456,13 @@ The `|>` is used all the time, so instead:
 let file = openFile fileName
 ```
 
-you will find most of F# programs:
+you will that find most of F# programs use
 
 ```fsharp
 let file = fileName |> openFile
 ```
+
+(maybe not in such simple case)
 
 ***
 
@@ -549,5 +551,14 @@ Math.cap extension
 simon cousins
 concise/more code on screen
 
-
 quick-sort
+
+lists
+unions
+unions with one case
+if
+match
+try/catch
+rpn
+sort
+json

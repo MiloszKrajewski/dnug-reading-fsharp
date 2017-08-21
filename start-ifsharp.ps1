@@ -1,5 +1,7 @@
 Add-Type -AssemblyName System.IO.Compression.FileSystem
 
+$ifsharp_url = "https://github.com/fsprojects/IfSharp/releases/download/v3.0.0-beta2/IfSharp.v3.0.0-beta2.zip"
+
 function Unzip([string] $zipfile, [string] $outpath) {
     [System.IO.Compression.ZipFile]::ExtractToDirectory($zipfile, $outpath)
 }
@@ -20,8 +22,7 @@ try {
     }
 
     if (-not (Test-Path "ifsharp")) {
-        $url = "https://github.com/fsprojects/IfSharp/releases/download/v3.0.0-beta2/IfSharp.v3.0.0-beta2.zip"
-        Download "$url" "./ifsharp"
+        Download "$ifsharp_url" "./ifsharp"
         & "./ifsharp/ifsharp" "--install"
     }
 
