@@ -1,23 +1,23 @@
 - title : Reading F#
-- description : or don't get scared by syntax
+- description : don't let syntax scare you
 - author : Milosz Krajewski
 - theme : beige
 - transition : zoom
 
 ***
 
-## Reading F#
+# Reading F#
 
 ![F#](images/fsharp-guitar.png)
 
-### don't let syntax scare you off
-(familiar != simple != easy)
+### don't let syntax scare you
 
 ***
 
----
+## F#
 
 * multi-paradigm
+* strongly typed with type inference
 * functional first
 * low ceremony
 * concise
@@ -28,24 +28,105 @@
 
 (let Venkat speak)
 
-* JVM = .NET
-* Java = C#
-* Scala = F#
+* **JVM** <-> **.NET**
+* **Java** <-> **C#**
+* **Scala** <-> **F#**
 
----
+***
+
+## Primitive types
+
+```fsharp
+() // unit
+true // bool
+1234 // int
+1234.5678 // float
+"hello" // string
+'c' // char
+```
+
+***
 
 ## 'let' Binding
 
 ```fsharp
-// f#
 let eight = 8
 let hello = "Hello"
 ```
 
 ```javascript
 // es6
-const eight = 8
-const hello = "Hello"
+const eight = 8;
+const hello = "Hello";
+```
+
+---
+
+```fsharp
+let i = 1234
+let f = 1234.5678
+let s = "hello"
+let c = 'c'
+```
+
+nobody does that but you can provide type
+
+```fsharp
+let i: int = 1234
+let f: float = 1234.5678
+let s: string = "hello"
+let c: char = 'c'
+```
+
+---
+
+## 'let' binding as expression
+
+**Problem**
+
+```fsharp
+let squared = func () * func ()
+```
+
+(if there was no `pow` nor `sqr`)
+
+---
+
+**Solution**
+
+Let's use temporary variable:
+
+```fsharp
+let temp = func ()
+let squared = temp * temp
+```
+
+and use is as part of expression:
+
+```fsharp
+let squared = (let temp = func() in temp * temp)
+```
+
+brackets are not really required,<br>
+but it is easier to read
+
+---
+
+As scope of temp variable is minimal, 
+we can use just `t`:
+
+```fsharp
+let squared = let t = func() in t * t
+```
+
+> Variable names like `i` and `j` are just fine if their scope is five lines long. -- [**Mark Seemann**](http://blog.ploeh.dk/2015/08/17/when-x-y-and-z-are-great-variable-names/)
+
+---
+
+You actually can do this in JavaScript but it looks unnatural:
+
+```javascript
+const squared = (() => { const t = func(); return t * t; })();
 ```
 
 ***
@@ -53,8 +134,7 @@ const hello = "Hello"
 ## Void is a type
 
 ```csharp
-public class Void
-{
+public class Void {
     public static Void Value = new Void(); // singleton
     private Void() { } // private
     public override string ToString() => "Void";
@@ -72,8 +152,6 @@ let () = Void.Value
 ```
 
 ```fsharp
-// f#
-let nothing: unit = ()
 let nothing = ()
 ```
 
@@ -82,17 +160,71 @@ let nothing = ()
 const nothing = undefined // null? {}?
 ```
 
-***
+---
 
-## Primitive types
+Because `void` is not a real type in C#, 
+lot of generic types and related methods are implemented twice:
 
-```fsharp
-let _: unit = ()
-let b: bool = true
-let i: int = 1234
-let f: float = 1234.5678
-let s: string = "string"
-let c: char = 'c'
+* `Task` and `Task<T>`
+* `Action` and `Func<T>`
+
+while:
+
+* `Task` is `Task<Void>`
+* `Action` is `Func<Void>`
+
+---
+
+```csharp
+void Forgive(Action action) { 
+    try { action(); } catch { /* ignore */ }
+}
+
+T Forgive(Func<T> action) { 
+    try { return action(); } catch { return default(T); }
+}
+
+// example usage
+Forgive(() => File.Delete(tempFile));
+```
+
+---
+
+Is this made up problem?
+
+```csharp
+public interface IServiceRestHelper
+{
+    Task<IRestResponse> SendRequest(
+        IRestRequest request, ServiceType serviceType);
+
+    Task<IRestResponse> SendRequest(
+        IRestRequest request, ServiceType serviceType, int timeout);
+
+    Task<IRestResponse<T>> SendRequest<T>(
+        IRestRequest request, ServiceType serviceType) 
+        where T : new();
+
+    Task<IRestResponse<T>> SendRequest<T>(
+        IRestRequest request, ServiceType serviceType, int timeout) 
+        where T : new();
+}
+```
+
+No.
+
+---
+
+with `void` and `nullable` types, it would be just:
+
+```csharp
+public interface IServiceRestHelper
+{
+    Task<IRestResponse<T>> SendRequest<T>(
+        IRestRequest request, 
+        ServiceType serviceType, 
+        TimeSpan? timeout = null);
+}
 ```
 
 ***
@@ -102,8 +234,6 @@ let c: char = 'c'
 ```fsharp
 let tuple: string * int = ("answer is", 42) // Tuple<string, int>
 ```
-
-(the explicitest, you can ask why `*`)
 
 ---
 
@@ -117,38 +247,46 @@ const tuple = ["answer is", 42]; // array
 ```
 
 ```csharp
-var response = new Tuple<string, int>("answer is", 42);
+var tuple = new Tuple<string, int>("answer is", 42);
 ```
 
 ---
 
 ### Decomposition
 
-```csharp
-var text = response.Item1;
-var value = response.Item2;
+```fsharp
+let text, value = tuple
 ```
 
 ```javascript
 // es6
-let [text, value] = tuple; // array
-let [text, value] = ["answer is", 42]; // array
+const [text, value] = tuple; // array
 ```
 
+
+```csharp
+var text = tuple.Item1;
+var value = tuple.Item2;
+```
+
+---
+
+### Complex decomposition
+
 ```fsharp
-let text, value = tuple
-let text, value = "answer is", 42
+let tuple = "answer is", 42
+let (answer, number), pi = tuple, 3.14
 ```
 
 ---
 
 ```fsharp
-let _, value = "not interesting", 1337 // string * int
+let _, value = "no one cares", 1337 // string * int
 let _, _, third = 1, 2, 3 // int * int * int
 ```
 
 ```javascript
-let [_, value] = ["not interesting", 1337];
+let [_, value] = ["no one cares", 1337];
 let [_, _, third] = [1, 2, 3]; // BANG!
 ```
 
@@ -156,30 +294,47 @@ let [_, _, third] = [1, 2, 3]; // BANG!
 
 ## Function types
 
-Every function has one argument and result
+Every function has one argument and result:
 
 `Func<Request, Response>`
 
-```csharp
-Action<T> === Func<T, void>
-Func<T> === Func<void, T>
-Func<A, B, C> === Func<Tuple<A, B>, C> === Func<A, Func<B, C>>
-```
+`Request -> Response`
 
 ---
 
-```fsharp
-type Func<'A, 'B> = 'A -> 'B
-```
+### C# with void
 
-```fsharp
-('A * 'B) -> 'C // Func<Tuple<'A, 'B>, 'C>
-'A -> ('B -> 'C) // Func<'A, Func<'B, 'C>>
-```
+| As it is        | Normalized             |
+|:---------------:|:----------------------:|
+| `Action`        | `Func<void, void>`     |
+| `Action<T>`     | `Func<T, void>`        |
+| `Func<T>`       | `Func<void, T>`        |
+| `Func<A, B, C>` | `Func<Tuple<A, B>, C>` | 
+| `Func<A, B, C>` | `Func<A, Func<B, C>>`  |
 
 ---
 
-### 'a -> 'b
+### F#
+
+`Func<A, B>`
+
+is
+
+`'A -> 'B`
+
+---
+
+| C#                     | F#                 |
+|:----------------------:|:------------------:|
+| `Action`               | `unit -> unit`     |
+| `Action<T>`            | `'T -> void`       |
+| `Func<T>`              | `unit -> 'T`       |
+| `Func<Tuple<A, B>, C>` | `('A * 'B) -> 'C`  |
+| `Func<A, Func<B, C>>`  | `'A -> ('B -> 'C)` |
+
+---
+
+### Signatures
 
 ```fsharp
 int -> string // toString 123
@@ -191,10 +346,10 @@ unit -> double // nextRandom ()
 
 ---
 
+### 'a -> 'b -> 'c
+
 ```fsharp
 let multiply a b = a * b // int -> int -> int
-let multiply = fun a b -> a * b
-let multiply = fun a -> fun b -> a * b
 multiply 5 6
 ```
 
@@ -206,6 +361,8 @@ multiply(5)(6); // 30
 
 ---
 
+### 'a -> ('b -> 'c)
+
 ```javascript
 const multiply = (a) => (b) => a * b;
 const multiplyBy5 = multiply(5);
@@ -214,28 +371,23 @@ multiplyBy5(6); // 30
 
 ```fsharp
 let multiply a b = a * b // int -> int -> int
-let multiplyBy5 v = multiply 5 v
-let multiplyBy5 = multiply 5 // (5 ->) int -> int
+let multiplyBy5 = multiply 5 // int -> int
 multiplyBy5 6 // 30
 ```
 
 ---
 
+### ('a * 'b) -> 'c
+
 ```javascript
 // es6
 const multiply = (a, b) => a * b;
 multiply(5, 6);
-const multiplyBy5 = (v) => multiply(5, v);
-multiplyBy5(6); // 30
 ```
 
 ```fsharp
-let multiply (a, b) = a * b
-let multiply = fun (a, b) -> a * b
-```
-
-```fsharp
-let multiplyBy5 v = multiply (5, v)
+let multiply (a, b) = a * b // (int * int) -> int
+multiply (5, 6) // 30
 ```
 
 ---
@@ -244,8 +396,10 @@ let multiplyBy5 v = multiply (5, v)
 
 ```fsharp
 let multiply (a, b) = a * b
-let guess = multiply 5, 40 // int?
+let guess = multiply 5, 40
 ```
+
+what type is `guess`?
 
 ---
 
@@ -255,41 +409,28 @@ let nope = multiply 5, 40 // (int -> int) * int = func, 40
 let yeah = multiply (5, 40) // int = 200
 ```
 
----
-
-```fsharp
-let func3 a b c = a * b + c // int -> int -> int -> int
-let func2 = func3 12 // int -> int -> int
-let func1 = func3 12 7 // int -> int
-let value = func3 12 7 15 // int
-```
-
-```fsharp
-let func2 x y = func3 12 x y // int -> int -> int
-let func2 = func3 12 // int -> int -> int
-```
-
 ***
 
 ## Operators (are functions)
 
 ```fsharp
-let round interval value = 
-    (value + interval/2) / interval * interval
-round 10 1 // 0
-round 10 3 // 0
-round 10 5 // 10
-round 10 10 // 10
-round 10 127 // 130
+let roundUpTo interval value = 
+    (value + interval - 1) / interval * interval
+roundUpTo 10 9 // 10
+roundUpTo 10 11 // 20
 ```
 
+---
+
+Operators are just functions with fancy names
+
 ```fsharp
-let (>*<) interval value = round interval value
-10 >*< 127 // 130
-(>*<) 10 127 // 130
-let round10 = (>*<) 10
-round10 127
+let (^~) value interval = roundUpTo interval value
+3 ^~ 10
+(^~) 3 10
 ```
+
+(and some complicated precedence rules)
 
 ---
 
@@ -303,8 +444,22 @@ printfn "%d" 42
 ```
 
 ```fsharp
-round 10 127
-127 |> round 10
+roundUpTo 10 12
+12 |> roundUpTo 10
+```
+
+---
+
+The `|>` is used all the time, so instead:
+
+```fsharp
+let file = openFile fileName
+```
+
+you will find most of F# programs:
+
+```fsharp
+let file = fileName |> openFile
 ```
 
 ***
@@ -321,8 +476,8 @@ C# is generally left-to-right and top-down, but has islands of right-to-left'ism
 SendEmail(
     GenerateEmailFromTemplate(
         "YouHaveBeenSelectedTemplate",
-            GetPersonsEmailAddress(
-                FindPersonById(id))));
+        GetPersonsEmailAddress(
+            FindPersonById(id))));
 ```
 
 ---
@@ -371,9 +526,6 @@ for (var i = 1; i <= 8; ++i)
     y = y * 2;
 Console.WriteLine("{0},{1}", x, y);
 ```
-
----
-
 
 ---
 
