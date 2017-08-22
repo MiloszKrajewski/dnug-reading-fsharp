@@ -157,7 +157,21 @@ let nothing = ()
 
 ```javascript
 // es6
-const nothing = undefined // null? {}?
+const nothing = void 0 // undefined
+```
+
+---
+
+```javascript
+function test(request) { console.log(request); } // no 'return'
+let response = test(); // argument not given
+```
+
+will print:
+
+```javascript
+undefined
+undefined
 ```
 
 ---
