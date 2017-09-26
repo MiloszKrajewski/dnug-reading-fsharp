@@ -3,8 +3,14 @@ open System
 type Token =
     | Symbol of string
     | Number of float
+
     static member Parse t =
-        match Double.TryParse(t) with | true, v -> Number v | _ -> Symbol t
+        let mutable value = 0.0
+        if Double.TryParse(t, ref value) then
+            Number value
+        else
+            Symbol t
+    // static member Parse t = match Double.TryParse(t) with | true, v -> Number v | _ -> Symbol t
 
 let split (text: string) = text.Split([|' '|])
 let tokenize text = text |> split |> Seq.map Token.Parse

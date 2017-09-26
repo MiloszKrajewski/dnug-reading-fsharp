@@ -569,10 +569,31 @@ quick-sort
 
 lists
 unions
+    type safety
 unions with one case
+    type safety
 if
 match
 try/catch
 rpn
 sort
 json
+
+"F# ... Structural equ... bla bla bla ... Discriminated... bla bla bla"
+
+C# is not that shit,
+
+```csharp
+protected Guid GetOrCreateUserId(string userKey)
+{
+    if (UserIds.ContainsKey(userKey))
+    {
+        return UserIds[userKey];
+    }
+
+    var userId = Guid.NewGuid();
+    UserIds.Add(userKey, userId);
+
+    return userId;
+}
+```
