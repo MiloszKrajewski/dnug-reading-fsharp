@@ -10,22 +10,25 @@ type Token =
     | Colon | Comma
     | EOF
 
+let tap f a = f a; a
+let apply a f = f a
+
 module Token =
     let tryMatch pattern input = match Regex.Match(input, pattern) with | m when m.Success -> Some m | _ -> None
     let tryParse pattern func text =
         text
         |> tryMatch (sprintf "^\\s*%s\\s*" pattern)
         |> Option.map (fun m -> func m, text.Substring(m.Length))
-    let tryParseBool = tryParse "true|false" (fun m -> m.Value |> Boolean.Parse |> Bool)
-    let tryParseNumber = tryParse "\\d+(\\.\\d+)?" (fun m -> m.Value |> float |> Number)
+    let tryParseBool = tryParse "\\b(true|false)\\b" (fun m -> m.Value |> Boolean.Parse |> Bool)
+    let tryParseNumber = tryParse "\\b\\d+(\\.\\d+)?\\b" (fun m -> m.Value |> float |> Number)
     let tryParseString = tryParse "\"(([^\"]|\\\")*)\"" (fun m -> m.Groups.[1].Value |> String)
     let tryParseSymbol s t = tryParse (sprintf "%s" s) (fun _ -> t)
     let tryParseAny parsers text = parsers |> List.tryPick (fun parser -> parser text)
 
     let parseAny parsers text =
         match tryParseAny parsers text with
-        | Some (EOF, _) -> None
         | None -> failwithf "Unexpected expression: %s" text
+        | Some (EOF, _) -> None
         | x -> x
 
     let allParsers = [
@@ -40,11 +43,11 @@ module Token =
         tryParseSymbol "\\:" Colon
         tryParseSymbol "$" EOF
     ]
-    let tokenize text = List.unfold (parseAny allParsers) text
+    let tokenize text = List.unfold (fun tail -> parseAny allParsers tail) text
 
-    let result = tokenize "{ 1, false2, 3, \"a\": 7 }"
+    let result = tokenize "{ 1, false, 2.00123, 3, \"a\": 7 }"
 
-// module Json = 
+// module Json =
 //     type Json =
 //         | String of string
 //         | Number of float
@@ -52,7 +55,7 @@ module Token =
 //         | Object of (string * Json) list
 
 //     // tokenize: string -> (token * string) option
-//     // parse: token list -> 
+//     // parse: token list ->
 
 //     let rec parse text = seq {
 //         match tryParseAny allParsers text with

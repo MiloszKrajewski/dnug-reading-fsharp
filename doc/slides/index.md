@@ -26,11 +26,7 @@
 
 ### What is the problem with F#?
 
-> [...] biggest obstacles for F# [...] is that C# is a very good language. It's not like Swift vs Objective-C, where Swift is the obvious choice if you're not masochistic [...] - [Thomas Bandt](https://thomasbandt.com/the-problem-with-fsharp-evangelism)
-
----
-
-> F# ... Structural equ... bla bla bla ... Discriminated... bla bla bla -- [Thomas Bandt](https://thomasbandt.com/the-problem-with-fsharp-evangelism)
+> [...] biggest obstacles for F# [...] is that C# is a very good language. It's not like Swift vs Objective-C, where Swift is the obvious choice if you're not masochistic [...] -- [Thomas Bandt](https://thomasbandt.com/the-problem-with-fsharp-evangelism)
 
 ---
 
@@ -49,10 +45,10 @@
 
 (let Venkat speak)
 
-|:-----:|:----:|
 | JVM   | .NET |
-| Java  | C#** |
-| Scala | F#** |
+|:-----:|:----:|
+| Java  | C#   |
+| Scala | F#   |
 
 ***
 
@@ -116,6 +112,8 @@ const nothing = void 0 // undefined
 ```
 
 ---
+
+### Need for void
 
 Because `void` is not a real type in C#,
 lot of generic types and related methods are implemented twice:
@@ -257,6 +255,18 @@ or combination of both:
 
 ---
 
+...you do this in JavaScript sometimes:
+
+```javascript
+let alice = (a, b, c) => { ... };
+let frank = (a) => (b) => (c) => { ... };
+let steve = (a) => (b, c) => { ... };
+```
+
+although in F# it is just bread-and-butter.
+
+---
+
 ### Signatures
 
 ```fsharp
@@ -286,31 +296,31 @@ multiply(5)(6); // 30
 
 ### 'a -> ('b -> 'c)
 
-```javascript
-const multiply = (a) => (b) => a * b;
-const multiplyBy5 = multiply(5);
-multiplyBy5(6); // 30
-```
-
 ```fsharp
 let multiply a b = a * b // int -> int -> int
 let multiplyBy5 = multiply 5 // int -> int
 multiplyBy5 6 // 30
 ```
 
+```javascript
+const multiply = (a) => (b) => a * b;
+const multiplyBy5 = multiply(5);
+multiplyBy5(6); // 30
+```
+
 ---
 
 ### ('a * 'b) -> 'c
+
+```fsharp
+let multiply (a, b) = a * b // (int * int) -> int
+multiply (5, 6) // 30
+```
 
 ```javascript
 // es6
 const multiply = (a, b) => a * b;
 multiply(5, 6);
-```
-
-```fsharp
-let multiply (a, b) = a * b // (int * int) -> int
-multiply (5, 6) // 30
 ```
 
 ***
@@ -330,8 +340,8 @@ Operators are just functions with fancy names
 
 ```fsharp
 let (^~) value interval = roundUpTo interval value
-3 ^~ 10
-(^~) 3 10
+3 ^~ 10 // as infix operator
+(^~) 3 10 // as function
 ```
 
 (and some complicated precedence rules)
@@ -367,6 +377,25 @@ let file = fileName |> openFile
 ```
 
 (maybe not in such simple case)
+
+---
+
+when functions return more than one result (as tuple)<br>
+you can untangle them and pass separetely:
+
+```fsharp
+let alice p = let (b, s) = p in printfn "%b %s" b s
+let frank (b, s) = printfn "%b %s" b s
+let steve b s = printfn "%b %s" b s
+
+let pair = (true, "love")
+pair |> alice
+pair |> frank
+pair ||> steve // note double pipe
+pair ||> printfn "%b %s"
+```
+
+---
 
 ***
 
@@ -411,6 +440,33 @@ sendEmail (
 
 ---
 
+### Pipeline is making it's way to JavaScript
+
+[Pipeline operator](https://github.com/tc39/proposal-pipeline-operator)
+
+```javascript
+const doubleSay = (str) => str + ", " + str;
+const capitalize = (str) => str[0].toUpperCase() + str.substring(1);
+const exclaim = (str) => str + '!';
+```
+
+```javascript
+let result1 = exclaim(capitalize(doubleSay("hello")));
+let result2 = "hello" |> doubleSay |> capitalize |> exclaim;
+```
+
+***
+
+## Indentation
+
+![Indentation](images/indentation-c.png)
+
+---
+
+![Indentation](images/indentation-venn.png)
+
+---
+
 What would this code print?
 
 ```fsharp
@@ -432,6 +488,7 @@ Console.WriteLine("{0},{1}", x, y);
 ```
 
 ---
+
 
 reduce: max, sum, join,
 
@@ -547,6 +604,14 @@ looks a unnatural, but work fine:
 const squared = (t => t * t)(func());
 ```
 
+```fsharp
+let squared = (fun t -> t * t)(func());
+```
+
+```fsharp
+let squared = func() |> fun t -> t * t;
+```
+
 ---
 
 ```javascript
@@ -561,6 +626,12 @@ undefined
 undefined
 ```
 
+---
+
+```fsharp
+let rec repeat i x y = match i with | 0 -> x, y | _ -> repeat (i - 1) (x + 1) (y * 2)
+(0, 1) ||> repeat 8 ||> printfn "%d,%d"
+```
 
 
 Problems solved:
