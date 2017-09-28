@@ -14,10 +14,31 @@
 
 ***
 
+|         | Classic     | Modern |
+|---------|:-----------:|:------:|
+| Native  | C/C++       | Rust   |
+| iOS     | Objective-C | Swift  |
+| JVM     | Java        | Scala  |
+| Android | Java        | Kotlin |
+| .NET    | C#          | F#     |
+
+---
+
+### What is the problem with F#?
+
+> [...] biggest obstacles for F# [...] is that C# is a very good language. It's not like Swift vs Objective-C, where Swift is the obvious choice if you're not masochistic [...] - [Thomas Bandt](https://thomasbandt.com/the-problem-with-fsharp-evangelism)
+
+---
+
+> F# ... Structural equ... bla bla bla ... Discriminated... bla bla bla -- [Thomas Bandt](https://thomasbandt.com/the-problem-with-fsharp-evangelism)
+
+---
+
 ## F#
 
 * multi-paradigm
-* strongly typed with type inference
+* strongly typed
+* type inference
 * functional first
 * low ceremony
 * concise
@@ -28,9 +49,10 @@
 
 (let Venkat speak)
 
-* **JVM** <-> **.NET**
-* **Java** <-> **C#**
-* **Scala** <-> **F#**
+|:-----:|:----:|
+| JVM   | .NET |
+| Java  | C#** |
+| Scala | F#** |
 
 ***
 
@@ -69,7 +91,7 @@ let s = "hello"
 let c = 'c'
 ```
 
-nobody does that but you can provide type
+you can provide type if you really really want to
 
 ```fsharp
 let i: int = 1234
@@ -78,100 +100,19 @@ let s: string = "hello"
 let c: char = 'c'
 ```
 
----
-
-## 'let' binding as expression
-
-**Problem**
-
-```fsharp
-let squared = func () * func ()
-```
-
-(if there was no `pow` nor `sqr`)
-
----
-
-**Solution**
-
-Let's use temporary variable:
-
-```fsharp
-let temp = func ()
-let squared = temp * temp
-```
-
-and use is as part of expression:
-
-```fsharp
-let squared = (let temp = func() in temp * temp)
-```
-
-brackets are not really required,<br>
-but it is easier to read
-
----
-
-As scope of temp variable is minimal,
-we can use just `t`:
-
-```fsharp
-let squared = let t = func() in t * t
-```
-
-> Variable names like `i` and `j` are just fine if their scope is five lines long. -- [**Mark Seemann**](http://blog.ploeh.dk/2015/08/17/when-x-y-and-z-are-great-variable-names/)
-
----
-
-You actually can do this in JavaScript but it looks unnatural:
-
-```javascript
-const squared = (() => { const t = func(); return t * t; })();
-```
-
 ***
 
 ## Void is a type
 
-```csharp
-public class Void {
-    public static Void Value = new Void(); // singleton
-    private Void() { } // private
-    public override string ToString() => "Void";
-    public override bool Equals(object other) => other is Void;
-    public override int GetHashCode() => 0;
-}
-```
-
----
+...and it has a value
 
 ```fsharp
-// not real code
-type unit = Void
-let () = Void.Value
-```
-
-```fsharp
-let nothing = ()
+let nothing: unit = ()
 ```
 
 ```javascript
 // es6
 const nothing = void 0 // undefined
-```
-
----
-
-```javascript
-function test(request) { console.log(request); } // no 'return'
-let response = test(); // argument not given
-```
-
-will print:
-
-```javascript
-undefined
-undefined
 ```
 
 ---
@@ -185,7 +126,7 @@ lot of generic types and related methods are implemented twice:
 while:
 
 * `Task` is `Task<Void>`
-* `Action` is `Func<Void>`
+* `Action` is `Func<Void, Void>`
 
 ---
 
@@ -196,48 +137,6 @@ void Forgive(Action action) {
 
 T Forgive(Func<T> action) {
     try { return action(); } catch { return default(T); }
-}
-
-// example usage
-Forgive(() => File.Delete(tempFile));
-```
-
----
-
-Is this made up problem?
-
-```csharp
-public interface IServiceRestHelper
-{
-    Task<IRestResponse> SendRequest(
-        IRestRequest request, ServiceType serviceType);
-
-    Task<IRestResponse> SendRequest(
-        IRestRequest request, ServiceType serviceType, int timeout);
-
-    Task<IRestResponse<T>> SendRequest<T>(
-        IRestRequest request, ServiceType serviceType)
-        where T : new();
-
-    Task<IRestResponse<T>> SendRequest<T>(
-        IRestRequest request, ServiceType serviceType, int timeout)
-        where T : new();
-}
-```
-
-No.
-
----
-
-with `void` and `nullable` types, it would be just:
-
-```csharp
-public interface IServiceRestHelper
-{
-    Task<IRestResponse<T>> SendRequest<T>(
-        IRestRequest request,
-        ServiceType serviceType,
-        TimeSpan? timeout = null);
 }
 ```
 
@@ -250,6 +149,8 @@ let tuple: string * int = ("answer is", 42) // Tuple<string, int>
 ```
 
 ---
+
+### Construction
 
 ```fsharp
 let tuple = "answer is", 42
@@ -316,10 +217,7 @@ Every function has one argument and result:
 
 ---
 
-### C# with void
-
-| As it is        | Normalized             |
-|:---------------:|:----------------------:|
+|:----------------|-----------------------:|
 | `Action`        | `Func<void, void>`     |
 | `Action<T>`     | `Func<T, void>`        |
 | `Func<T>`       | `Func<void, T>`        |
@@ -345,6 +243,17 @@ is
 | `Func<T>`              | `unit -> 'T`       |
 | `Func<Tuple<A, B>, C>` | `('A * 'B) -> 'C`  |
 | `Func<A, Func<B, C>>`  | `'A -> ('B -> 'C)` |
+
+---
+
+Functions with many arguments in F# are either:
+
+* `a -> b -> c -> d`
+* `(a * b * c) -> d`
+
+or combination of both:
+
+* `a -> (b * c) -> d`
 
 ---
 
@@ -402,25 +311,6 @@ multiply(5, 6);
 ```fsharp
 let multiply (a, b) = a * b // (int * int) -> int
 multiply (5, 6) // 30
-```
-
----
-
-### Riddle
-
-```fsharp
-let multiply (a, b) = a * b
-let guess = multiply 5, 40
-```
-
-what type is `guess`?
-
----
-
-```fsharp
-let multiply (a, b) = a * b
-let nope = multiply 5, 40 // (int -> int) * int = func, 40
-let yeah = multiply (5, 40) // int = 200
 ```
 
 ***
@@ -531,9 +421,7 @@ for i = 1 to 8 do
 printfn "%d,%d" x y
 ```
 
----
-
-And this one?
+vs
 
 ```csharp
 int x = 0, y = 1;
@@ -544,6 +432,8 @@ Console.WriteLine("{0},{1}", x, y);
 ```
 
 ---
+
+reduce: max, sum, join,
 
 multi-paradigm, functional first
 pit of success
@@ -597,3 +487,84 @@ protected Guid GetOrCreateUserId(string userKey)
     return userId;
 }
 ```
+
+
+
+
+
+
+
+
+---
+
+## 'let' binding as expression
+
+**Problem**
+
+```fsharp
+let squared = func () * func ()
+```
+
+(if there was no `pow` nor `sqr`)
+
+---
+
+**Solution**
+
+Let's use temporary variable:
+
+```fsharp
+let temp = func ()
+let squared = temp * temp
+```
+
+and use is as part of expression:
+
+```fsharp
+let squared = (let temp = func() in temp * temp)
+```
+
+brackets are not really required,<br>
+but it is easier to read
+
+---
+
+As scope of temp variable is minimal,
+we can use just `t`:
+
+```fsharp
+let squared = let t = func() in t * t
+```
+
+> Variable names like `i` and `j` are just fine if their scope is five lines long. -- [**Mark Seemann**](http://blog.ploeh.dk/2015/08/17/when-x-y-and-z-are-great-variable-names/)
+
+---
+
+You actually can do this in JavaScript,<br>
+looks a unnatural, but work fine:
+
+```javascript
+const squared = (t => t * t)(func());
+```
+
+---
+
+```javascript
+function test(request) { console.log(request); } // no 'return'
+let response = test(); // argument not given
+```
+
+will print:
+
+```javascript
+undefined
+undefined
+```
+
+
+
+Problems solved:
+* void is a type so you can yes generics once
+* strongly typed so you make less mistakes
+* type inference so you type less
+* low ceremony so it is easy to start
