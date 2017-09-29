@@ -11,3 +11,5 @@ let (|>) a f = f a
 
 let value = 7 in printfn "%d" (value*value)
 printfn "%d" value
+
+()

@@ -39,6 +39,7 @@
 * low ceremony, concise
 * expression based
 * visually honest
+* encourages composition
 
 ---
 
@@ -60,10 +61,10 @@ F# is so strongly typed that you can't even assign `int` to `double` variable...
 
 ### Low ceremony
 
-F# (but also other modern languages)<br>
-are trying to limit the ceremony:<br>
+Ceremony prevents things from being done right<br>
+(ie: "two interfaces and an enumeration").
 
-> [...] things you have to do before you can do what you really want to do [...] -- *Venkat Subramaniam*
+> [...] things you have to do before you can do what you really want to do [...] -- [Venkat Subramaniam](https://www.youtube.com/watch?v=4jCjDEb9KZI)
 
 ---
 
@@ -71,14 +72,10 @@ are trying to limit the ceremony:<br>
 
 in F# everything can be an expression, even on-the-fly-anonymous-interface-implementation-expression.
 
----
-
-When `if` is a statement:
-
 ```javascript
 function functionA() {
     let variable;
-    if (condition) {
+    if (condition) { // 'if' is a statement
         variable = expressionA();
     } else {
         variable = expressionB();
@@ -87,24 +84,47 @@ function functionA() {
 }
 ```
 
----
-
-When `if` is expression:
-
 ```javascript
-const functionA = 
+const functionA = // '?:' is expression
     () => functionB(condition ? expressionA() : expressionB());
 ```
 
 ---
 
-### visually honest
+### Visual honesty
 
+It does what it looks like.
 
+```csharp
+File
+    .Open("people.csv")
+    .ReadAllLines()
+    .Select(line => Person.Parse(line))
+    .Where(person => person.Age > 60)
+    .Where(person => Email.IsValid(person.email))
+    .Select(person => Template.Build(person.email))
+    .ForEach(email => Email.Send(email));
+```
 
 ---
 
-(let Venkat speak)
+### Conciseness
+
+* every line of code is liability
+* code not written don't have to be maintained
+* less code has lower cognitive load (you can actually read it)
+* write less code, deliver more is the same time
+* logic fits one screen therefore it is easier to reason about
+
+---
+
+### Composition
+
+Building isolated, easy to test small pieces which come together at the end.
+
+---
+
+### Venkay says...
 
 | JVM   | .NET |
 |:-----:|:----:|
@@ -204,8 +224,8 @@ T Forgive(Func<T> action) {
 JavaScript just does not care:
 
 ```javascript
-function forgive(action) { 
-    try { return action(); } catch(_) { } 
+function forgive(action) {
+    try { return action(); } catch(_) { }
 };
 
 forgive(() => 8); // 8
@@ -222,25 +242,25 @@ if you think I'm making shit up:
 public interface IServiceRestHelper
 {
     Task<IRestResponse> SendRequest(
-        IRestRequest request, 
+        IRestRequest request,
         ServiceType serviceType);
     Task<IRestResponse> SendRequest(
-        IRestRequest request, 
-        ServiceType serviceType, 
+        IRestRequest request,
+        ServiceType serviceType,
         int timeout);
     Task<IRestResponse<T>> SendRequest<T>(
-        IRestRequest request, 
+        IRestRequest request,
         ServiceType serviceType) where T : new();
     Task<IRestResponse<T>> SendRequest<T>(
-        IRestRequest request, 
-        ServiceType serviceType, 
+        IRestRequest request,
+        ServiceType serviceType,
         int timeout) where T : new();
 }
 ```
 
 ---
 
-## Questions?
+## Questions so far?
 
 ***
 
@@ -386,6 +406,7 @@ string -> float // parse "987"
 int -> int -> string -> unit // drawPixel x y color
 (int * int) -> string -> unit // drawPixel (x, y) color
 unit -> double // nextRandom ()
+HttpRequest -> Task<HttpResponse> // web server
 ```
 
 ---
@@ -436,6 +457,38 @@ multiply(5, 6);
 
 ***
 
+## Lambdas
+
+```fsharp
+let multiply = fun a b -> a * b
+let multiply a b = a * b
+```
+
+```javascript
+const multiply = (a, b) => a * b
+funtion multiply(a, b) { return a * b; }
+```
+
+---
+
+```fsharp
+let greet name = printfn "Greetings, %s!" name
+let twice action = action (); action ()
+twice (fun () -> greet "Alice")
+```
+
+---
+
+Also:
+
+```fsharp
+let twice action arg = action arg; action arg
+twice (fun name -> greet name) "Frank"
+twice greet "Frank"
+```
+
+***
+
 ## Operators (are functions)
 
 ```fsharp
@@ -481,7 +534,7 @@ The `|>` is used all the time, so instead:
 let file = openFile fileName
 ```
 
-you will that find most of F# programs use
+you can often see:
 
 ```fsharp
 let file = fileName |> openFile
@@ -495,8 +548,13 @@ when functions return more than one result (as tuple)<br>
 you can untangle them and pass separetely:
 
 ```fsharp
-let alice p = let (b, s) = p in printfn "%b %s" b s
+// ('a * 'b) -> 'c
+let alice p =
+    let (b, s) = p
+    printfn "%b %s" b s
 let frank (b, s) = printfn "%b %s" b s
+
+// 'a -> 'b -> 'c
 let steve b s = printfn "%b %s" b s
 
 let pair = (true, "love")
@@ -505,8 +563,6 @@ pair |> frank
 pair ||> steve // note double pipe
 pair ||> printfn "%b %s"
 ```
-
----
 
 ***
 
@@ -528,6 +584,12 @@ SendEmail(
 
 ---
 
+Which looks like that:
+
+![Visual Honesty](images/vhonesty-bad.png)
+
+---
+
 F# helps to sort this out using `|>` operator:
 
 ```fsharp
@@ -537,6 +599,12 @@ id
 |> generateEmailFromTemplate "YouHaveBeenSelectedTemplate"
 |> sendEmail
 ```
+
+---
+
+Which makes it:
+
+![Visual Honesty](images/vhonesty-good.png)
 
 ---
 
@@ -551,19 +619,45 @@ sendEmail (
 
 ---
 
-### Pipeline is making it's way to JavaScript
+### ...BTW...
+
+---
+
+### Pipeline is making its way to JavaScript
 
 [Pipeline operator](https://github.com/tc39/proposal-pipeline-operator)
 
 ```javascript
-const doubleSay = (str) => str + ", " + str;
-const capitalize = (str) => str[0].toUpperCase() + str.substring(1);
-const exclaim = (str) => str + '!';
+const doubleSay = s => s + ", " + s;
+const capitalize = s => s[0].toUpperCase() + s.substring(1);
+const exclaim = s => s + '!';
 ```
 
 ```javascript
-let result1 = exclaim(capitalize(doubleSay("hello")));
-let result2 = "hello" |> doubleSay |> capitalize |> exclaim;
+let resultA = exclaim(capitalize(doubleSay("hello")));
+let resultB = "hello" |> doubleSay |> capitalize |> exclaim;
+```
+
+---
+
+Witch out pipeline operator,<br>
+there is no easy way to format it:
+
+```javascript
+foreach(
+    map(
+        filter(people, p => p.Name === "John"),
+        p => p.email),
+    e => invite(e));
+```
+
+---
+
+```javascript
+people
+    .filter(p => p.Name === "John")
+    .map(p => p.email)
+    .foreach(e => invite(e));
 ```
 
 ***
@@ -598,15 +692,137 @@ for (var i = 1; i <= 8; ++i)
 Console.WriteLine("{0},{1}", x, y);
 ```
 
+***
+
+## Lists
+
+`[1; 2; 3]`
+
 ---
 
+```fsharp
+let empty = []
+let listA = [1; 2; 3]
+let listB = [
+    1
+    2
+    3
+]
+```
+
+---
+
+```fsharp
+let slightlyLonger = 7 :: [1; 2; 3]; // add 1 item
+let slightlyLonger = [7] @ [1; 2; 3]; // add a list (with 1 item)
+let slightlyLonger = 7 :: 1 :: 2 :: 3 :: []; // add many one by one
+```
+
+```fsharp
+let muchLonger = [9; 8; 7] @ [1; 2; 3]; // add lists
+let muchLonger = 9 :: [8; 7] @ (1 :: 2 :: [3]); // get crazy
+```
+
+***
+
+## Records
+
+```fsharp
+type Person = {
+    FirstName: string
+    LastName: string
+    Age: int
+}
+```
+
+or
+
+```fsharp
+type Person = { FirstName: string; LastName: string; Age: int }
+```
+
+---
+
+### Constructing
+
+```fsharp
+let frank = { FirstName = "Frank"; LastName = "Smith"; Age = 21 }
+```
+
+```javascript
+const frank = { firstName: "Frank", lastName: "Smith", age: 21 }
+```
+
+---
+
+### Cloning
+
+```fsharp
+let alice = { frank with FirstName = "Alice" } // twin
+```
+
+```javascript
+const alice = { ...frank, firstName: "Alice" } // twin
+```
+
+---
+
+### Deconstructing
+
+```fsharp
+let { LastName = franksName; Age = franksAge } = frank
+```
+
+```javascript
+const { lastName: franksName; age: franksAge } = frank
+```
+
+---
+
+***
+
+## Unions
+
+***
+
+## Option
+
+***
+
+## if else match
+
+## bait and switch
+
+## for
+
+## recursion
+
+
+## Composition and abstraction reuse
+
+```javascript
+function sum(numbers) {
+    let result = 0;
+    for (let i = 0; i < numbers.length; i++) {
+        result = result + numbers[i];
+    }
+    return result;
+}
+```
+
+```javascript
+function concat(strings) {
+    let result = "";
+    for (let i = 0; i < numbers.length; i++) {
+        result = result + strings[i];
+    }
+    return result;
+}
+```
 
 reduce: max, sum, join,
 
-multi-paradigm, functional first
 pit of success
-type of inference
-low ceremeony
 expression based
 jupyter
 indentation
@@ -780,7 +996,7 @@ because
 
 ```csharp
 var value = long.MaxValue;
-if (value != (long)(double)value) 
+if (value != (long)(double)value)
     throw new InvalidOperationException("No worky!");
 ```
 
@@ -806,3 +1022,9 @@ T Weird<T>(bool x, double y, T a, T b) where T: IComparable { ... }
 x = switch (...)
 temp variable, fancy break, iife with return
 constructor without new
+
+
+Programs should be written for people to read, and only incidentally for machines to execute.
+-- from "Structure and Interpretation of Computer Programs" by Abelson and Sussman
+
+“Any fool can write code that a computer can understand. Good programmers write code that humans can understand.” -- Martin Fowler, "Refactoring: Improving the Design of Existing Code"
