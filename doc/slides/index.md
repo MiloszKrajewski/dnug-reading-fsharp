@@ -14,6 +14,8 @@
 
 ***
 
+## Modern languages
+
 |         | Classic     | Modern |
 |---------|:-----------:|:------:|
 | Native  | C/C++       | Rust   |
@@ -32,14 +34,73 @@
 
 ## F#
 
-* multi-paradigm
-* strongly typed
-* type inference
-* functional first
-* low ceremony
-* concise
+* multi-paradigm, functional first
+* strongly typed, type inference
+* low ceremony, concise
 * expression based
 * visually honest
+
+---
+
+### Multi-paradigm, functional first
+
+Supports both OO and FP...
+
+...but FP is a little bit more natural in F#.
+
+---
+
+### Strongly typed, type inference
+
+F# is so strongly typed that you can't even assign `int` to `double` variable...
+
+...but at the same time it infers types if it is possible, so you rarely specify them.
+
+---
+
+### Low ceremony
+
+F# (but also other modern languages)<br>
+are trying to limit the ceremony:<br>
+
+> [...] things you have to do before you can do what you really want to do [...] -- *Venkat Subramaniam*
+
+---
+
+### Expression based
+
+in F# everything can be an expression, even on-the-fly-anonymous-interface-implementation-expression.
+
+---
+
+When `if` is a statement:
+
+```javascript
+function functionA() {
+    let variable;
+    if (condition) {
+        variable = expressionA();
+    } else {
+        variable = expressionB();
+    };
+    return functionB(variable);
+}
+```
+
+---
+
+When `if` is expression:
+
+```javascript
+const functionA = 
+    () => functionB(condition ? expressionA() : expressionB());
+```
+
+---
+
+### visually honest
+
+
 
 ---
 
@@ -138,12 +199,61 @@ T Forgive(Func<T> action) {
 }
 ```
 
+---
+
+JavaScript just does not care:
+
+```javascript
+function forgive(action) { 
+    try { return action(); } catch(_) { } 
+};
+
+forgive(() => 8); // 8
+forgive(() => { throw "bang!" }); // undefined
+```
+
+(which in this case is acually useful)
+
+---
+
+if you think I'm making shit up:
+
+```csharp
+public interface IServiceRestHelper
+{
+    Task<IRestResponse> SendRequest(
+        IRestRequest request, 
+        ServiceType serviceType);
+    Task<IRestResponse> SendRequest(
+        IRestRequest request, 
+        ServiceType serviceType, 
+        int timeout);
+    Task<IRestResponse<T>> SendRequest<T>(
+        IRestRequest request, 
+        ServiceType serviceType) where T : new();
+    Task<IRestResponse<T>> SendRequest<T>(
+        IRestRequest request, 
+        ServiceType serviceType, 
+        int timeout) where T : new();
+}
+```
+
+---
+
+## Questions?
+
 ***
 
 ## Tuples
 
 ```fsharp
-let tuple: string * int = ("answer is", 42) // Tuple<string, int>
+// Tuple<string, int>
+let pair = "answer is", 42 // string * int
+```
+
+```fsharp
+// Tuple<bool, string, char>
+let triplet = true, "love", '!'; // bool * string * char
 ```
 
 ---
@@ -161,6 +271,7 @@ const tuple = ["answer is", 42]; // array
 
 ```csharp
 var tuple = new Tuple<string, int>("answer is", 42);
+var tuple = Tuple.Create("answer is", 42);
 ```
 
 ---
@@ -639,3 +750,59 @@ Problems solved:
 * strongly typed so you make less mistakes
 * type inference so you type less
 * low ceremony so it is easy to start
+
+
+try, match, if, throw, is an expression
+Option.alt vs ||
+ServiceRestHelper as single function
+
+### Multi-paradigm
+
+Supports both OO and FP...
+
+---
+
+### Functional first
+
+...but FP is a little bit more natural in F#.
+
+---
+
+### Strongly typed
+
+F# is so strongly typed that even this does not compile:
+
+```fsharp
+let value: float = 3
+```
+
+because
+
+```csharp
+var value = long.MaxValue;
+if (value != (long)(double)value) 
+    throw new InvalidOperationException("No worky!");
+```
+
+---
+
+### Type inference
+
+At the same time if guesses types, so you rarely specify them:
+
+```fsharp
+let weird x y a b = if x && y < 7.4 then max a b else b
+```
+
+it just knows that this function is:
+
+```csharp
+T Weird<T>(bool x, double y, T a, T b) where T: IComparable { ... }
+```
+
+---
+
+
+x = switch (...)
+temp variable, fancy break, iife with return
+constructor without new
