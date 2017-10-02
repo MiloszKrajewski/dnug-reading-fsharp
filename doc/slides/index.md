@@ -35,8 +35,8 @@
 ## F#
 
 * multi-paradigm, functional first
-* strongly typed, type inference
-* low ceremony, concise
+* strongly typed with type inference
+* low ceremony and concise
 * expression based
 * visually honest
 * encourages composition
@@ -51,18 +51,19 @@ Supports both OO and FP...
 
 ---
 
-### Strongly typed, type inference
+### Strongly typed with type inference
 
-F# is so strongly typed that you can't even assign `int` to `double` variable...
+F# is so strongly typed that you can't even<br>
+assign `int` to `double` variable without explicit conversion...
 
-...but at the same time it infers types if it is possible, so you rarely specify them.
+...but at the same time it infers types if it is possible,<br>
+so you rarely specify them.
 
 ---
 
 ### Low ceremony
 
-Ceremony prevents things from being done right<br>
-(ie: "two interfaces and an enumeration").
+Ceremony and time pressure prevents things from being done right.
 
 > [...] things you have to do before you can do what you really want to do [...] -- [Venkat Subramaniam](https://www.youtube.com/watch?v=4jCjDEb9KZI)
 
@@ -70,24 +71,8 @@ Ceremony prevents things from being done right<br>
 
 ### Expression based
 
-in F# everything can be an expression, even on-the-fly-anonymous-interface-implementation-expression.
-
-```javascript
-function functionA() {
-    let variable;
-    if (condition) { // 'if' is a statement
-        variable = expressionA();
-    } else {
-        variable = expressionB();
-    };
-    return functionB(variable);
-}
-```
-
-```javascript
-const functionA = // '?:' is expression
-    () => functionB(condition ? expressionA() : expressionB());
-```
+in F# everything is an expression.<br>
+It makes you code very expressive (no pun, just a fact).
 
 ---
 
@@ -95,24 +80,13 @@ const functionA = // '?:' is expression
 
 It does what it looks like.
 
-```csharp
-File
-    .Open("people.csv")
-    .ReadAllLines()
-    .Select(line => Person.Parse(line))
-    .Where(person => person.Age > 60)
-    .Where(person => Email.IsValid(person.email))
-    .Select(person => Template.Build(person.email))
-    .ForEach(email => Email.Send(email));
-```
-
 ---
 
 ### Conciseness
 
 * every line of code is liability
 * code not written don't have to be maintained
-* less code has lower cognitive load (you can actually read it)
+* less code has lower cognitive load (you can glance over it)
 * write less code, deliver more is the same time
 * logic fits one screen therefore it is easier to reason about
 
@@ -154,7 +128,7 @@ let hello = "Hello"
 ```
 
 ```javascript
-// es6
+// JS
 const eight = 8;
 const hello = "Hello";
 ```
@@ -188,26 +162,40 @@ let nothing: unit = ()
 ```
 
 ```javascript
-// es6
+// JS
 const nothing = void 0 // undefined
 ```
+
+The type is `unit` and value is `()`
 
 ---
 
 ### Need for void
 
-Because `void` is not a real type in C#,
-lot of generic types and related methods are implemented twice:
+Because `void` is not a real type in C#,<br>
+lot of generic types and related methods<br>
+are implemented twice:
 
 * `Task` and `Task<T>`
 * `Action` and `Func<T>`
 
-while:
+---
 
-* `Task` is `Task<Void>`
-* `Action` is `Func<Void, Void>`
+While in fact:
+
+* `Task` is just `Task<Void>`
+* `Func<T>` is just `Func<Void, T>`
+* `Action` is just `Func<Void, Void>`
 
 ---
+
+It would be much easier if we could implement it just once:
+
+for `Task<T>` and `Func<T, U>` respectively.
+
+---
+
+For example,<br>`Forgive` function needs to be implemented twice:
 
 ```csharp
 void Forgive(Action action) {
@@ -218,6 +206,8 @@ T Forgive(Func<T> action) {
     try { return action(); } catch { return default(T); }
 }
 ```
+
+...what if logic get's more complicated?
 
 ---
 
@@ -236,7 +226,7 @@ forgive(() => { throw "bang!" }); // undefined
 
 ---
 
-if you think I'm making shit up:
+Am I making shit up?
 
 ```csharp
 public interface IServiceRestHelper
@@ -260,6 +250,34 @@ public interface IServiceRestHelper
 
 ---
 
+Am I?
+
+![Spot the difference](images/spot-the-difference-T.png)
+
+---
+
+## Everything is expression
+
+As void (unit) is just a value, everything is an expression,<br>
+even things you ususally don't expect to be:
+
+```fsharp
+let result = printfn "Hello!" // unit
+```
+
+---
+
+It's like saying:
+
+```csharp
+// C#
+var result = Console.WriteLine("Hello!");
+```
+
+and assigning `void` to `result`.
+
+---
+
 ## Questions so far?
 
 ***
@@ -273,7 +291,7 @@ let pair = "answer is", 42 // string * int
 
 ```fsharp
 // Tuple<bool, string, char>
-let triplet = true, "love", '!'; // bool * string * char
+let triplet = true, "love", '!' // bool * string * char
 ```
 
 ---
@@ -285,11 +303,12 @@ let tuple = "answer is", 42
 ```
 
 ```javascript
-// es6
+// JS
 const tuple = ["answer is", 42]; // array
 ```
 
 ```csharp
+// C#
 var tuple = new Tuple<string, int>("answer is", 42);
 var tuple = Tuple.Create("answer is", 42);
 ```
@@ -303,12 +322,13 @@ let text, value = tuple
 ```
 
 ```javascript
-// es6
+// JS
 const [text, value] = tuple; // array
 ```
 
 
 ```csharp
+// C#
 var text = tuple.Item1;
 var value = tuple.Item2;
 ```
@@ -330,8 +350,21 @@ let _, _, third = 1, 2, 3 // int * int * int
 ```
 
 ```javascript
+// JS
 let [_, value] = ["no one cares", 1337];
-let [_, _, third] = [1, 2, 3]; // BANG!
+let [_, _, third] = [1, 2, 3]; // BANG! (runtime, of course)
+```
+
+---
+
+```fsharp
+let pair = "answer is", 42
+let one, two, three = pair // compilation error
+```
+
+```javascript
+const pair = ["answer is", 42];
+let [one, two, three] = pair; // not a BANG!, just "undefined"
 ```
 
 ***
@@ -419,14 +452,18 @@ multiply 5 6
 ```
 
 ```javascript
-// es6
+// JS - self-harm mode
+function multiply(a) { return function(b) { return a * b; } };
+multiply(5)(6); // 30
+```
+
+```javascript
+// JS
 const multiply = (a) => (b) => a * b;
 multiply(5)(6); // 30
 ```
 
 ---
-
-### 'a -> ('b -> 'c)
 
 ```fsharp
 let multiply a b = a * b // int -> int -> int
@@ -435,6 +472,7 @@ multiplyBy5 6 // 30
 ```
 
 ```javascript
+// JS
 const multiply = (a) => (b) => a * b;
 const multiplyBy5 = multiply(5);
 multiplyBy5(6); // 30
@@ -450,9 +488,24 @@ multiply (5, 6) // 30
 ```
 
 ```javascript
-// es6
+// JS
 const multiply = (a, b) => a * b;
 multiply(5, 6);
+```
+
+---
+
+```fsharp
+let multiply (a, b) = a * b // (int * int) -> int
+let multiplyBy5 x = multiply (5, x)
+multiplyBy5 6 // 30
+```
+
+```javascript
+// JS
+const multiply = (a, b) => a * b;
+const multiplyBy5 = (x) => multiply(5, x);
+multiplyBy5(6); // 30
 ```
 
 ***
@@ -484,8 +537,17 @@ Also:
 ```fsharp
 let twice action arg = action arg; action arg
 twice (fun name -> greet name) "Frank"
-twice greet "Frank"
 ```
+
+---
+
+```fsharp
+fun text -> parse 10 text
+parse 10
+```
+
+a |> b |> c
+a |> (b >> c)
 
 ***
 
@@ -640,8 +702,8 @@ let resultB = "hello" |> doubleSay |> capitalize |> exclaim;
 
 ---
 
-Witch out pipeline operator,<br>
-there is no easy way to format it:
+Without pipeline operator,<br>
+there is no easy way to even format this:
 
 ```javascript
 foreach(
@@ -652,6 +714,8 @@ foreach(
 ```
 
 ---
+
+while pipeline'ing makes it very readable:
 
 ```javascript
 people
@@ -713,14 +777,14 @@ let listB = [
 ---
 
 ```fsharp
-let slightlyLonger = 7 :: [1; 2; 3]; // add 1 item
-let slightlyLonger = [7] @ [1; 2; 3]; // add a list (with 1 item)
-let slightlyLonger = 7 :: 1 :: 2 :: 3 :: []; // add many one by one
+let slightlyLonger = 7 :: [1; 2; 3] // add 1 item
+let slightlyLonger = [7] @ [1; 2; 3] // add a list (with 1 item)
+let slightlyLonger = 7 :: 1 :: 2 :: 3 :: [] // add many one by one
 ```
 
 ```fsharp
-let muchLonger = [9; 8; 7] @ [1; 2; 3]; // add lists
-let muchLonger = 9 :: [8; 7] @ (1 :: 2 :: [3]); // get crazy
+let muchLonger = [9; 8; 7] @ [1; 2; 3] // add lists
+let muchLonger = 9 :: [8; 7] @ (1 :: 2 :: [3]) // get crazy
 ```
 
 ***
@@ -1028,3 +1092,33 @@ Programs should be written for people to read, and only incidentally for machine
 -- from "Structure and Interpretation of Computer Programs" by Abelson and Sussman
 
 “Any fool can write code that a computer can understand. Good programmers write code that humans can understand.” -- Martin Fowler, "Refactoring: Improving the Design of Existing Code"
+
+```javascript
+function functionA() {
+    let variable;
+    if (condition) { // 'if' is a statement
+        variable = expressionA();
+    } else {
+        variable = expressionB();
+    };
+    return functionB(variable);
+}
+```
+
+```javascript
+const functionA = // '?:' is expression
+    () => functionB(condition ? expressionA() : expressionB());
+```
+
+```csharp
+File
+    .Open("people.csv")
+    .ReadAllLines()
+    .Select(line => Person.Parse(line))
+    .Where(person => person.Age > 60)
+    .Where(person => Email.IsValid(person.email))
+    .Select(person => Template.Build(person.email))
+    .ForEach(email => Email.Send(email));
+```
+
+No return keyword
