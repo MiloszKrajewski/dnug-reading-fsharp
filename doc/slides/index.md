@@ -1208,3 +1208,18 @@ private void ApplyEvent(object obj)
             break;
     }
 }
+
+no semicolons
+no type annotations
+return is last expression
+immutable by default (list.append returns new list)
+
+functional programming is a style not a language (you can do this in C# and JavaScript)
+everything is expression even void
+pure-function, referential transparency, caching
+
+show object with constructor and single metod mutating into curried function
+
+class hierarchy vs deiscriminated unions
+
+flexibility requires discipline
