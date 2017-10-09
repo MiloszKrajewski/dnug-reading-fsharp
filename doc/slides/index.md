@@ -258,7 +258,7 @@ Am I?
 
 ## Everything is expression
 
-As void (unit) is just a value, everything is an expression,<br>
+As "void" is just a value, everything is an expression,<br>
 even things you ususally don't expect to be:
 
 ```fsharp
@@ -275,6 +275,9 @@ var result = Console.WriteLine("Hello!");
 ```
 
 and assigning `void` to `result`.
+
+It doesn't have any particular significance<br>
+until you need some generalization.
 
 ---
 
@@ -465,6 +468,21 @@ multiply(5)(6); // 30
 
 ---
 
+### Function's result
+
+Because everyting is expression<br>
+there is no `return` keyword<br>
+last expression becomes a result
+
+```fsharp
+// float -> float -> float
+let debugAndMultiply a b = // ? -> ? -> ?
+    printfn "%g %g" a b // float -> float -> unit
+    a * b // float
+```
+
+---
+
 ```fsharp
 let multiply a b = a * b // int -> int -> int
 let multiplyBy5 = multiply 5 // int -> int
@@ -512,6 +530,19 @@ multiplyBy5(6); // 30
 
 ## Lambdas
 
+Lambda is defined with `fun` keyword:
+
+```fsharp
+let multiply = (fun a b -> a * b)
+```
+
+```javascript
+// JS
+const multiply = (a, b) => a * b;
+```
+
+---
+
 ```fsharp
 let multiply = fun a b -> a * b
 let multiply a b = a * b
@@ -525,29 +556,9 @@ funtion multiply(a, b) { return a * b; }
 ---
 
 ```fsharp
-let greet name = printfn "Greetings, %s!" name
-let twice action = action (); action ()
-twice (fun () -> greet "Alice")
+let twice action = action (); action () // (unit -> unit) -> unit
+twice (fun () -> printfn "Hello!")
 ```
-
----
-
-Also:
-
-```fsharp
-let twice action arg = action arg; action arg
-twice (fun name -> greet name) "Frank"
-```
-
----
-
-```fsharp
-fun text -> parse 10 text
-parse 10
-```
-
-a |> b |> c
-a |> (b >> c)
 
 ***
 
@@ -573,6 +584,8 @@ let (^~) value interval = roundUpTo interval value
 (and some complicated precedence rules)
 
 ---
+
+### Pipe operator
 
 ```fsharp
 let (|>) arg func = func arg
@@ -624,6 +637,54 @@ pair |> alice
 pair |> frank
 pair ||> steve // note double pipe
 pair ||> printfn "%b %s"
+```
+
+---
+
+### Compose operator
+
+Compose operator 'composes' two functions, without applying any arguments.
+It's combine two functions by creating third one:
+
+```fsharp
+// combines functions f and g, by creating third one taking x
+let (>>) f g = fun x -> x |> f |> g
+let (>>) f g = fun x -> g (f x)
+let (>>) f g x = g (f x)
+```
+
+```javascript
+const combine = (f, g) => (x) => g(f(x));
+```
+
+---
+
+```fsharp
+let (>>) f g = fun x -> x |> f |> g
+
+let square x = x * x
+let negate x = -x
+let square_then_negate = square >> negate;
+square_then_negate(7) |> printfn "%d"
+```
+
+```javascript
+const combine = (f, g) => (x) => g(f(x));
+
+const square = (x) => x * x;
+const negate = (x) => -x;
+const square_then_negate = combine(square, negate);
+console.log(square_then_negate(7));
+```
+
+---
+
+```fsharp
+(f >> g) x
+x |> (f >> g)
+x |> f |> g
+g (f x)
+f x |> g
 ```
 
 ***
@@ -1122,3 +1183,28 @@ File
 ```
 
 No return keyword
+
+```fsharp
+fun text -> parse 10 text
+parse 10
+```
+
+a |> b |> c
+a |> (b >> c)
+
+
+private void ApplyEvent(object obj)
+{
+    switch (obj)
+    {
+        case int v:
+            OnNumber(v);
+            break;
+        case double v:
+            OnNumber(v);
+            break;
+        case string o:
+            OnAction(o);
+            break;
+    }
+}
