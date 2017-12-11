@@ -624,13 +624,15 @@ you can untangle them and pass separetely:
 
 ```fsharp
 // ('a * 'b) -> 'c
-let alice p =
+let alice p = // takes pair
     let (b, s) = p
     printfn "%b %s" b s
-let frank (b, s) = printfn "%b %s" b s
+let frank (b, s) =
+    printfn "%b %s" b s
 
 // 'a -> 'b -> 'c
-let steve b s = printfn "%b %s" b s
+let steve b s =
+    printfn "%b %s" b s
 
 let pair = (true, "love")
 pair |> alice
@@ -664,7 +666,7 @@ let (>>) f g = fun x -> x |> f |> g
 
 let square x = x * x
 let negate x = -x
-let square_then_negate = square >> negate;
+let square_then_negate = square >> negate
 square_then_negate(7) |> printfn "%d"
 ```
 
@@ -678,6 +680,8 @@ console.log(square_then_negate(7));
 ```
 
 ---
+
+They are all the same:
 
 ```fsharp
 (f >> g) x
@@ -838,6 +842,13 @@ let listB = [
 ---
 
 ```fsharp
+let concat listA listB = listA @ listB
+let prepend item list = item :: list
+```
+
+---
+
+```fsharp
 let slightlyLonger = 7 :: [1; 2; 3] // add 1 item
 let slightlyLonger = [7] @ [1; 2; 3] // add a list (with 1 item)
 let slightlyLonger = 7 :: 1 :: 2 :: 3 :: [] // add many one by one
@@ -921,7 +932,6 @@ const { lastName: franksName; age: franksAge } = frank
 ## for
 
 ## recursion
-
 
 ## Composition and abstraction reuse
 
