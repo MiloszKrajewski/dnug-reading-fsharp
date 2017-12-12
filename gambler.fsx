@@ -28,3 +28,5 @@ let rec streak state =
     | Some state -> streak state 
 
 let test cash bet = { cash = decimal cash; highest = decimal cash; initial = decimal bet; current = decimal bet; iteration = 1 } |> streak
+
+test 1000 10
