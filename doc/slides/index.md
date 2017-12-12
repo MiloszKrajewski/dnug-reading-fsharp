@@ -624,15 +624,13 @@ you can untangle them and pass separetely:
 
 ```fsharp
 // ('a * 'b) -> 'c
-let alice p = // takes pair
+let alice p =
     let (b, s) = p
     printfn "%b %s" b s
-let frank (b, s) =
-    printfn "%b %s" b s
+let frank (b, s) = printfn "%b %s" b s
 
 // 'a -> 'b -> 'c
-let steve b s =
-    printfn "%b %s" b s
+let steve b s = printfn "%b %s" b s
 
 let pair = (true, "love")
 pair |> alice
@@ -666,7 +664,7 @@ let (>>) f g = fun x -> x |> f |> g
 
 let square x = x * x
 let negate x = -x
-let square_then_negate = square >> negate
+let square_then_negate = square >> negate;
 square_then_negate(7) |> printfn "%d"
 ```
 
@@ -680,8 +678,6 @@ console.log(square_then_negate(7));
 ```
 
 ---
-
-They are all the same:
 
 ```fsharp
 (f >> g) x
@@ -842,13 +838,6 @@ let listB = [
 ---
 
 ```fsharp
-let concat listA listB = listA @ listB
-let prepend item list = item :: list
-```
-
----
-
-```fsharp
 let slightlyLonger = 7 :: [1; 2; 3] // add 1 item
 let slightlyLonger = [7] @ [1; 2; 3] // add a list (with 1 item)
 let slightlyLonger = 7 :: 1 :: 2 :: 3 :: [] // add many one by one
@@ -910,7 +899,7 @@ let { LastName = franksName; Age = franksAge } = frank
 ```
 
 ```javascript
-const { lastName: franksName, age: franksAge } = frank
+const { lastName: franksName; age: franksAge } = frank
 ```
 
 ---
@@ -919,14 +908,158 @@ const { lastName: franksName, age: franksAge } = frank
 
 ## Unions
 
+...are like enums
+
+```csharp
+public enum Suit {
+    Club,
+    Diamond,
+    Heart,
+    Spade
+}
+```
+
 ```fsharp
-type PaymentMethod =
-    | Cash
-    | CreditCard of string
-    | Paypal of string
+type Suit =
+    | Club
+    | Diamond
+    | Heart
+    | Spade
 ```
 
 ---
+
+...but they are also like class hierarchies.
+
+Let's say we handle 4 payments methods:
+
+```csharp
+public enum PaymentMethod {
+    Cash,
+    CreditCard,
+    BankTransfer,
+    Paypal
+}
+```
+
+---
+
+and we need to store details of those payments:
+
+```csharp
+public abstract class PaymentDetails
+{
+    public abstract PaymentMethod Method { get; }
+}
+```
+
+```csharp
+public class CashPayment: PaymentDetails
+{
+    public override PaymentMethod Method => PaymentMethod.Cash;
+}
+```
+
+---
+
+```csharp
+public class CreditCardPayment: PaymentDetails
+{
+    public override PaymentMethod Method => PaymentMethod.CreditCard;
+
+    public string CardNumber { get; }
+
+    public CreditCard(string cardNumber)
+    {
+        CardNumber = cardNumber;
+    }
+}
+```
+
+---
+
+```csharp
+public class BankTransferPayment: PaymentDetails
+{
+    public override PaymentMethod Method => PaymentMethod.BankTransfer;
+
+    public string SortCode { get; }
+    public string AccountNumber { get; }
+
+    public CreditCard(string sortCode, string accountNumber)
+    {
+        SortCode = sortCode;
+        AccountNumber = accountNumber;
+    }
+}
+```
+
+---
+
+```csharp
+public class PaypalPayment: PaymentDetails
+{
+    public override PaymentMethod Method => PaymentMethod.Paypal;
+    public string Email { get; }
+    public PaypalPayment(string email)
+    {
+        Email = email;
+    }
+}
+```
+
+---
+
+...or...
+
+---
+
+```fsharp
+type PaymentDetails =
+    | Cash
+    | CreditCard of string
+    | BankTransfer of sortCode: string * accountNumber: string
+    | Paypal of email: string
+```
+
+---
+
+...or maybe this looks more familiar...
+
+---
+
+```fsharp
+type Comment =
+    | Chat of byte[]
+    | Quick of string
+    | Nudge
+    | Accept
+    | Decline
+    | Requote of (decimal * decimal)
+    //...
+```
+
+---
+
+### Single case unions
+
+```csharp
+public void AddComment(
+    Guid promptId, Guid senderId, Guid recipientId, Guid commentId)
+{
+    // ...
+}
+```
+
+---
+
+```csharp
+AddComment(senderId, recipientId, promptId, commentId); // Runtime BANG!
+```
+
+---
+
+!!!
 
 ***
 
@@ -941,6 +1074,7 @@ type PaymentMethod =
 ## for
 
 ## recursion
+
 
 ## Composition and abstraction reuse
 
@@ -1015,13 +1149,6 @@ protected Guid GetOrCreateUserId(string userKey)
     return userId;
 }
 ```
-
-
-
-
-
-
-
 
 ---
 
@@ -1227,18 +1354,3 @@ private void ApplyEvent(object obj)
             break;
     }
 }
-
-no semicolons
-no type annotations
-return is last expression
-immutable by default (list.append returns new list)
-
-functional programming is a style not a language (you can do this in C# and JavaScript)
-everything is expression even void
-pure-function, referential transparency, caching
-
-show object with constructor and single metod mutating into curried function
-
-class hierarchy vs deiscriminated unions
-
-flexibility requires discipline
