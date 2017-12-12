@@ -910,7 +910,7 @@ let { LastName = franksName; Age = franksAge } = frank
 ```
 
 ```javascript
-const { lastName: franksName; age: franksAge } = frank
+const { lastName: franksName, age: franksAge } = frank
 ```
 
 ---
@@ -918,6 +918,15 @@ const { lastName: franksName; age: franksAge } = frank
 ***
 
 ## Unions
+
+```fsharp
+type PaymentMethod =
+    | Cash
+    | CreditCard of string
+    | Paypal of string
+```
+
+---
 
 ***
 
