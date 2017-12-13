@@ -931,7 +931,7 @@ type Suit =
 
 ...but they are also like class hierarchies.
 
-Let's say we handle 4 payments methods:
+Let's say we handle 4 payment methods:
 
 ```csharp
 public enum PaymentMethod {
@@ -944,7 +944,7 @@ public enum PaymentMethod {
 
 ---
 
-and we need to store details of those payments:
+... and we need to store details of those payments.
 
 ```csharp
 public abstract class PaymentDetails
@@ -952,6 +952,8 @@ public abstract class PaymentDetails
     public abstract PaymentMethod Method { get; }
 }
 ```
+
+---
 
 ```csharp
 public class CashPayment: PaymentDetails
@@ -1010,6 +1012,78 @@ public class PaypalPayment: PaymentDetails
 
 ---
 
+It can be also modelled with single class:
+
+```csharp
+public abstract class PaymentDetails
+{
+    public PaymentMethod Method { get; }
+    public string CardNumber { get; }
+    public string SortCode { get; }
+    public string AccountNumber { get; }
+    public string Email { get; }
+
+    // ...
+}
+```
+
+---
+
+with catch-all constructor:
+
+```csharp
+{
+    // ...
+
+    protected PaymentDetails(
+        PaymentMethod method,
+        string cardNumber = null,
+        string sortCode = null, string accountNumber = null,
+        string email = null)
+    {
+        Method = method;
+        CardNumber = cardNumber;
+        SortCode = sortCode;
+        AccountNumber = accountNumber;
+        Email = email;
+    }
+
+    // ...
+```
+
+---
+
+and some static methods:
+
+```csharp
+{
+    // ...
+
+    public static PaymentDetails FromCash() =>
+        new PaymentDetails(PaymentMethod.Cash);
+
+    public static PaymentDetails FromCreditCard(string cardNumber) =>
+        new PaymentDetails(
+            PaymentMethod.CreditCard, cardNumber: creditCard);
+
+    public static PaymentDetails FromBankTransfer(
+        string sortCode, string accountNumber) =>
+        new PaymentDetails(
+            PaymentMethod.BankTransfer,
+            sortCode: sortCode, accountNumber: accountNumber);
+
+    public static PaymentDetails FromCreditCard(string cardNumber) =>
+        new PaymentDetails(
+            PaymentMethod.CreditCard, cardNumber: creditCard);
+
+    public static PaymentDetails FromPaypal(string email) =>
+        new PaymentDetails(
+            PaymentMethod.Paypal, email: email);
+}
+```
+
+---
+
 ...or...
 
 ---
@@ -1024,7 +1098,7 @@ type PaymentDetails =
 
 ---
 
-...or maybe this looks more familiar...
+Maybe this looks more familiar...
 
 ---
 
