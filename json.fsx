@@ -1,35 +1,30 @@
 open System
 open System.Text.RegularExpressions
 
-type Token =
-    | Bool of bool
-    | Number of float
-    | String of string
-    | LCurly | RCurly
-    | LSquare | RSquare
-    | Colon | Comma
-    | EOF
-
 let tap f a = f a; a
 let apply a f = f a
+let just v _ = v
 
-module Token =
-    let tryMatch pattern input = match Regex.Match(input, pattern) with | m when m.Success -> Some m | _ -> None
-    let tryParse pattern func text =
-        text
-        |> tryMatch (sprintf "^\\s*%s\\s*" pattern)
-        |> Option.map (fun m -> func m, text.Substring(m.Length))
-    let tryParseBool = tryParse "\\b(true|false)\\b" (fun m -> m.Value |> Boolean.Parse |> Bool)
-    let tryParseNumber = tryParse "\\b\\d+(\\.\\d+)?\\b" (fun m -> m.Value |> float |> Number)
-    let tryParseString = tryParse "\"(([^\"]|\\\")*)\"" (fun m -> m.Groups.[1].Value |> String)
-    let tryParseSymbol s t = tryParse (sprintf "%s" s) (fun _ -> t)
+module Tokenizer =
+    type Token =
+        | Bool of bool
+        | Number of float
+        | String of string
+        | LCurly | RCurly
+        | LSquare | RSquare
+        | Colon | Comma
+        | EOF
+
+    let tryConsume pattern extractor input =
+        match Regex.Match(input, sprintf "\\s*%s" pattern) with
+        | m when not m.Success -> None
+        | m -> Some (extractor m, input.Substring(m.Length))
+
+    let tryParseBool = tryConsume "\\b(true|false)\\b" (fun m -> m.Value |> Boolean.Parse |> Bool)
+    let tryParseNumber = tryConsume "\\b\\d+(\\.\\d+)?\\b" (fun m -> m.Value |> float |> Number)
+    let tryParseString = tryConsume "\"(([^\"]|\\\")*)\"" (fun m -> m.Groups.[1].Value |> String)
+    let tryParseSymbol s t = tryConsume (sprintf "%s" s) (fun _ -> t)
     let tryParseAny parsers text = parsers |> List.tryPick (fun parser -> parser text)
-
-    let parseAny parsers text =
-        match tryParseAny parsers text with
-        | None -> failwithf "Unexpected expression: %s" text
-        | Some (EOF, _) -> None
-        | x -> x
 
     let allParsers = [
         tryParseBool
@@ -43,6 +38,12 @@ module Token =
         tryParseSymbol "\\:" Colon
         tryParseSymbol "$" EOF
     ]
+
+    let parseAny parsers input =
+        match tryParseAny parsers input with
+        | None -> failwithf "Unexpected expression: %s" input
+        | Some (EOF, _) -> None
+        | x -> x
     let tokenize text = List.unfold (fun tail -> parseAny allParsers tail) text
 
     let result = tokenize "{ 1, false, 2.00123, 3, \"a\": 7 }"

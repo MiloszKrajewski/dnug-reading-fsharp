@@ -1113,13 +1113,98 @@ type Comment =
     //...
 ```
 
+***
+
+## Option
+
+![undefined](images/undefined.jpg)
+
 ---
+
+### Billion dollar mistake
+
+> Uglier than a Windows backslash, odder than ===, more common than PHP, more unfortunate than CORS, more disappointing than Java generics, more inconsistent than XMLHttpRequest, more confusing than a C preprocessor, flakier than MongoDB, and more regrettable than UTF-16, the worst mistake in computer science was introduced in 1965. -- [The worst mistake of computer science](https://www.lucidchart.com/techblog/2015/08/31/the-worst-mistake-of-computer-science/)
+
+---
+
+> I call it my billion-dollar mistake. [...] I was designing the first comprehensive type system for references in an object oriented language. My goal was to ensure that all use of references should be absolutely safe, with checking performed automatically by the compiler. But I couldn't resist the temptation to put in a null reference, simply because it was so easy to implement. This has led to innumerable errors, vulnerabilities, and system crashes, which have probably caused a billion dollars of pain and damage in the last forty years. -– *Tony Hoare, inventor of ALGOL*
+
+---
+
+![null-null](images/null-null.jpg)
+
+(because it's just not nice to cancel after null null)
+
+---
+
+* Nullable types
+* Null coalescing operator
+* Null object pattern
+
+---
+
+```csharp
+public void SendEmail(Person person, Content contect)
+{
+    if (person == null)
+    {
+        throw new ArgumentNullException("person");
+    }
+    if (content == null)
+    {
+        throw new ArgumentNullException("content");
+    }
+    // do it!
+}
+```
+
+...8 "cereminial" lines, repeated everywhere...
+
+---
+
+```csharp
+protected Comment LastComment(Func<Comment, bool> predicate = null) =>
+    Prompt.Comments? // <- can be null
+        .Where(predicate ?? (_ => true)) // <- can be null
+        .DefaultIfEmpty() // <- can be empty
+        .MaxBy(c => c?.Created) // <- can be null
+        .MaxBy(c => c?.CommentId) // <- can be null
+        .LastOrDefault(); // <- may be null
+
+public DateTime LastUpdated =>
+    LastComment()?.Created ?? Prompt.Created; // <- can be null
+```
+
+---
+
+```javascript
+const firstName = (
+  person &&
+  person.profile &&
+  person.profile.name &&
+  person.profile.name.firstName
+)
+```
+
+---
+
+```fsharp
+type Option<'a> =
+    | Some of 'a
+    | None
+```
+
+***
 
 ### Single case unions
 
+> [...] Primitive Obsession is using primitive data types to represent domain ideas. For example, we use a String to represent a message, an Integer to represent an amount of money, [...] -- http://wiki.c2.com/?PrimitiveObsession
+
+---
+
 ```csharp
 public void AddComment(
-    Guid promptId, Guid senderId, Guid recipientId, Guid commentId)
+    Guid promptId, Guid senderId, Guid commentId)
 {
     // ...
 }
@@ -1128,16 +1213,38 @@ public void AddComment(
 ---
 
 ```csharp
-AddComment(senderId, recipientId, promptId, commentId); // Runtime BANG!
+AddComment(senderId, promptId, commentId); // Runtime BANG!
 ```
 
 ---
 
-!!!
+```fsharp
+type UserId = | UserId of Guid
+type PromptId = | PromptId of Guid
+type CommentId = | CommentId of Guid
 
-***
+let addComment (prompt: PromptId) (sender: UserId) (comment: CommentId) =
+    ignore
+```
 
-## Option
+---
+
+```fsharp
+type Email = | Email of string
+module Email =
+    let isValid email = true // test
+    let create (email: string) =
+        if isValid email
+        then Email email
+        else failwithf "%s: not valid email address" email
+    let value (Email email) = email
+```
+
+Since now, there are no non-validated email in your app.<br>
+If it is `Email` it was already validated and already failed<br>
+if it wasn't correct.
+
+---
 
 ***
 
