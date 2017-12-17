@@ -1,5 +1,6 @@
 open System
 open System.Text.RegularExpressions
+open Json
 
 let tap f a = f a; a
 let apply a f = f a
@@ -16,7 +17,7 @@ module Tokenizer =
         | EOF
 
     let tryConsume pattern extractor input =
-        match Regex.Match(input, sprintf "\\s*%s" pattern) with
+        match Regex.Match(input, sprintf "^\\s*%s" pattern) with
         | m when not m.Success -> None
         | m -> Some (extractor m, input.Substring(m.Length))
 
@@ -48,31 +49,23 @@ module Tokenizer =
 
     let result = tokenize "{ 1, false, 2.00123, 3, \"a\": 7 }"
 
-// module Json =
-//     type Json =
-//         | String of string
-//         | Number of float
-//         | List of Json list
-//         | Object of (string * Json) list
+module Json =
+    open Tokenizer
 
-//     // tokenize: string -> (token * string) option
-//     // parse: token list ->
+    type Json =
+        | String of string
+        | Number of float
+        | Bool of bool
+        | List of Json list
+        | Object of (string * Json) list
 
-//     let rec parse text = seq {
-//         match tryParseAny allParsers text with
-//         | Some (EOF, _) -> yield EOF
-//         | Some (token, tail) -> yield token; yield! parse tail
-//         | None -> failwithf "Parser failed: %s" text
-//     }
-
-
-//     parse "123 \"hello\" { ," |> List.ofSeq
-
-//     // let rec parse text = seq {
-//     //     match text with
-//     //     | Regex "\\d+(\\.\\d+)?" m -> yield m.Value |> float |> Number |> Value; yield! parse (text.Substring(m.Length))
-//     //     | Regex "\"([^\"]|\")*\"" m -> yield m.Value |> String |> Value; yield! parse (text.Substring(m.Length))
-//     //     | Regex "\\{" m -> yield LCurly; yield! parse (text.Substring(m.Length))
-//     //     | Regex "\\}" m -> yield RCurly; yield! parse (text.Substring(m.Length))
-//     // }
-
+    let rec parse tokens =
+        match tokens with
+        | (Token.String s) :: tail -> Some (Json.String s, tail)
+        | (Token.Number n) :: tail -> Some (Json.Number n, tail)
+        | (Token.Bool b) :: tail -> Some (Json.Bool b, tail)
+        | Token.LSquare :: tail -> parseList tail []
+        | Token.LCurly :: tail -> ParseDict tail []
+    and parseList tokens acc = 
+        match tokens with
+        | Token.RSquare :: tail -> Some (acc)
