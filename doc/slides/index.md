@@ -1137,6 +1137,8 @@ type Comment =
 
 ---
 
+We address problem of nullability with...
+
 * Nullable types
 * Null coalescing operator
 * Null object pattern
@@ -1162,11 +1164,14 @@ public void SendEmail(Person person, Content contect)
 
 ---
 
+We spend a lot of time/code on tackling nulls,<br>
+both in C#...
+
 ```csharp
 protected Comment LastComment(Func<Comment, bool> predicate = null) =>
     Prompt.Comments? // <- can be null
         .Where(predicate ?? (_ => true)) // <- can be null
-        .DefaultIfEmpty() // <- can be empty
+        .DefaultIfEmpty() // <- can be empty (max doesn't like it)
         .MaxBy(c => c?.Created) // <- can be null
         .MaxBy(c => c?.CommentId) // <- can be null
         .LastOrDefault(); // <- may be null
@@ -1176,6 +1181,8 @@ public DateTime LastUpdated =>
 ```
 
 ---
+
+...and in JavaScript...
 
 ```javascript
 const firstName = (
@@ -1187,6 +1194,8 @@ const firstName = (
 ```
 
 ---
+
+![null-tweets](images/null-tweets.png)
 
 ```fsharp
 type Option<'a> =
