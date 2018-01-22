@@ -428,6 +428,7 @@ or combination of both:
 let alice = (a, b, c) => { ... };
 let frank = (a) => (b) => (c) => { ... };
 let steve = (a) => (b, c) => { ... };
+let peter = (a) => ({ b, c }) => { ... };
 ```
 
 although in F# it is just bread-and-butter.
@@ -1072,6 +1073,16 @@ and some static methods:
             PaymentMethod.BankTransfer,
             sortCode: sortCode, accountNumber: accountNumber);
 
+    // ...
+}
+```
+
+---
+
+```csharp
+{
+    // ...
+
     public static PaymentDetails FromCreditCard(string cardNumber) =>
         new PaymentDetails(
             PaymentMethod.CreditCard, cardNumber: creditCard);
@@ -1081,6 +1092,8 @@ and some static methods:
             PaymentMethod.Paypal, email: email);
 }
 ```
+
+(you do realize this is 3rd page, right?)
 
 ---
 
@@ -1110,7 +1123,140 @@ type Comment =
     | Accept
     | Decline
     | Requote of (decimal * decimal)
+```
+
+***
+
+## Pattern matching
+
+```fsharp
+match expression with
+| caseA -> resultA
+| caseB -> resultB
+| _ -> fallback
+```
+
+---
+
+Pattern matching is `if` and `switch` on steroids.
+
+You can `match` lists:
+
+```fsharp
+let explain list =
+    match list with
+    | [] -> failwith "List should not be empty"
+    | [_; 2; _] -> "Your list has 3 elements and second one is 2"
+    | _ :: _ :: 15 :: _ :: _ -> "Third element is 15, list is at least 4 elements"
+    | x :: tail when x % 2 = 0 -> sprintf "first element is even, and rest is %A" tail
+    | _ -> "Unexpected case, but no exception"
+```
+
+---
+
+this about same code in C#:
+
+```csharp
+string Explain(IList<int> list)
+{
+    if (list.Count == 0)
+    {
+        throw new ArgumentException("List should not be empty");
+    }
+    else if (list.Count == 3 && list[1] == 2)
+    {
+        return "Your list has 3 elements and second one is 2";
+    }
+    else if (list.Count >= 4 && list[3] == 15)
+    {
+        return "Third element is 15, list is at least 4 elements";
+    }
+    // ...
+```
+
+---
+
+```csharp
+    // ...
+
+    else if (list[1] % 2 == 0)
+    {
+        var tail = list.Skip(1).Select(x => x.ToString()).Join(";");
+        return $"first element is even, and rest is [{tail}]";
+    }
+    else
+    {
+        return "Unexpected case, but no exception";
+    }
+}
+```
+
+---
+
+Or `match` unions:
+
+```fsharp
+let decrypted =
+    match comment with | Chat text -> Decrypt(text) | Quick text -> text | _ -> ""
+```
+
+(if you remember)
+
+```fsharp
+type Comment =
+    | Chat of byte[]
+    | Quick of string
+    | Nudge
+    | Accept
+    | Decline
+    | Requote of (decimal * decimal)
     //...
+```
+
+---
+
+while in C#, you cannot:
+
+```csharp
+var decrypted =
+    switch (comment.CommentType)
+    {
+        case CommentType.Chat: return Decrypt(comment.Text);
+        case CommentType.Quick: comment.Text;
+        default: return string.Empty;
+    }
+```
+
+---
+
+Sometimes you can use `?:` to simulate `match`,<br>
+but only in simple cases:
+
+```csharp
+var decrypted =
+    comment.CommentType == CommentType.Chat ? Decrypt(comment.Text) :
+    comment.CommentType == CommentType.Quick ? comment.Text :
+    string.Empty;
+```
+
+---
+
+```fsharp
+let explainPriceChange comment =
+    match comment with
+    | Requote (before, after) when before = after -> "No change"
+    | Requote (_, 0m) -> "Now it is for free"
+    | Requote (before, after) when before < after -> "More expensive!"
+    | Requote (_, _) -> "Whatever"
+    | _ -> failwith "WTF!?"
+```
+
+```fsharp
+match (getDbData (), getWebData ()) with
+| (db, _) when db < 0 -> "DB one is less than 0"
+| (db, web) when let d = db - web in d > 0 && d % 2 = 0 ->
+    "Difference greater than 0 and even"
+| _ -> failwith "FAIL!"
 ```
 
 ***
@@ -1142,6 +1288,8 @@ We address problem of nullability with...
 * Nullable types
 * Null coalescing operator
 * Null object pattern
+
+(BTW, it is comming to [C#](https://blogs.msdn.microsoft.com/dotnet/2017/11/15/nullable-reference-types-in-csharp/))
 
 ---
 
@@ -1197,13 +1345,384 @@ const firstName = (
 
 ![null-tweets](images/null-tweets.png)
 
+---
+
+F# models 'lack of value' explicitly:
+
 ```fsharp
 type Option<'a> =
     | Some of 'a
     | None
 ```
 
+nullable variables are either 'some value' or 'no value':
+
+```fsharp
+let age = Some 42
+let weight = None
+```
+
+---
+
+When modelling object you explicitly state:
+
+```fsharp
+type Person = {
+    FirstName: string
+    LastName: string
+    Email: string option
+}
+```
+
+...and it may or may not be there.
+
+---
+
+You don't access value "just-like-that" anymore you rather conditionally propagate it:
+
+```fsharp
+let age = Some 42
+let weight = None
+let nextYearAgeA = age |> Option.map (fun a -> a + 1) // Some 43
+let nextYearAgeB = age |> Option.map ((+) 1) // Some 43
+let weightNextYear = weight |> Option.map ((+) 5) // None
+```
+
+---
+
+It forces you to address lack-of-value right away,<br>
+or handle it consciously.
+
+There is quick "get-out-of-jail" card, but use it wisely:
+
+```fsharp
+let age = Some 42
+let sureAge = age |> Option.get
+```
+
+it will throw an exception is value is `None`.
+
 ***
+
+## Option vs SRP
+
+**WHAT?**
+
+---
+
+There are, in is one missing functions in Option module:
+
+```fsharp
+module Option =
+    let def value option = match option with | Some x -> x | None -> value
+```
+
+and they allow to:
+
+```fsharp
+let age = Some 42
+let weight = None
+let ageOrDefault = age |> Option.def 18 // 42
+let weightOrDefault = weight |> Option.def 65 // 65
+```
+
+---
+
+Let's imagine those 3 functions:
+
+```csharp
+class Int32 {
+    bool Parse(string text);
+    bool TryParse(string text, out int result);
+    int TryParseOrDefault(string text, int fallback);
+}
+```
+
+(the 3rd one does not exist, but it should)
+
+---
+
+F# alread halps a little with those `TryXXX` functions:
+
+```fsharp
+let mutable result = 0
+let success = Int32.TryParse("123", ref result)
+```
+
+is actually:
+
+```fsharp
+let (success, result) = Int32.TryParse("123")
+```
+
+---
+
+It works for **ALL** functions<br>
+returning `bool` and having last argument as `out T`.
+
+```fsharp
+let (success, datetime) = DateTime.TryParse("2017-01-02")
+```
+
+---
+
+But let's go a little bit further and conver it to `option`:
+
+```fsharp
+module Int32 =
+    let tryParse text =
+        match Int32.TryParse(text) with
+        | (true, value) -> Some value
+        | (false, _) -> None
+```
+
+---
+
+so:
+
+```fsharp
+Int32.tryParse "123" // Some 123
+Int32.tryParse "hello" // None
+```
+
+---
+
+but let's go even further,<br>
+and handle **ALL** possible `TryXXX` functions:
+
+```fsharp
+let fromTry tryFunc value =
+    match tryFunc value with | (true, result) -> Some result | (false, _) -> None
+```
+
+so:
+
+```fsharp
+let tryParseInt = fromTry Int32.TryParse
+let tryParseDate = fromTry DateTime.TryParse
+
+tryParseDate "2018-01-17" // Some 2018-01-17
+tryParseInt "hello?" // None
+```
+
+---
+
+Where is SRP, though?
+
+Instead of having 3 methods on potentially unlimited number of classes:
+
+```csharp
+bool Parse(string text);
+bool TryParse(string text, out int result);
+int TryParseOrDefault(string text, int fallback);
+```
+
+we have:
+
+```fsharp
+text |> fromTry Int32.Parse // TryParse
+text |> fromTry Int32.Parse |> Option.get // Parse
+text |> fromTry Int32.Parse |> Option.def fallback // TryParseOrDefault
+```
+
+---
+
+What about dictionary?
+
+```csharp
+class Dictionary<K, V> {
+    V this[K key];
+    bool TryGetValue(K key, out V result);
+    V TryGetValueOrDefault(K key, V fallback);
+}
+```
+
+it should be one function:
+
+```fsharp
+get: K -> V option
+```
+
+---
+
+What about list:
+
+```csharp
+class List<T> {
+    T First();
+    T FirstOrDefault(T fallback);
+    bool TryFirst(out T result); // does not exist
+}
+```
+
+again, one function:
+
+```fsharp
+head: unit -> T option
+```
+
+***
+
+## Everything is expression
+
+```csharp
+var value = try { return int.Parse(text); } catch { return 0 };
+var category =
+    swith (type) {
+        case TransportType.Bicycle: return TransportClass.Slow;
+        case TransportType.Car: return TransportClass.Fast;
+        case TransportType.Teleport: return TransportClass.Instant;
+    };
+var numbers = for (int i = 0; i < 10; i++) yield return i;
+```
+
+all thouse thing are natural in F#.
+
+---
+
+```fsharp
+let value = try int.Parse(text) with | _ -> 0
+let category = match type with | Bicycle -> Slow | Car -> Fast | Teleport -> Instant
+let numbers = seq { for i = 1 to 10 do yield i }
+```
+
+---
+
+At least C# has bait-and-switch now and `throw` as expression:
+
+```csharp
+var depth =
+    image is Bitmap bmp ? bmp.BitsPerPixel :
+    image is Vector vec ? vec.ColorDepth :
+    throw new ArgumentException("Image type is not recognized");
+```
+
+which comes from F#:
+
+```fsharp
+let depth =
+    match image with
+    | ?: Bitmap as bmp -> bmp.BitsPerPixel
+    | ?: Vector as vec -> vec.ColorDepth
+    | _ -> failwith "Image type is not recognized"
+```
+
+---
+
+the old approach would be:
+
+```csharp
+int depth; // you have to declare it
+var bmp = image as Bitmap;
+if (bmp != null) {
+    depth = bmp.BitsPerPixel;
+} else {
+    var vec = image as Vector;
+    if (vec != null) {
+        depth = vec.ColorDepth;
+    }
+} else {
+    throw new ArgumentException("Image type is not recognized");
+}
+```
+
+(Bleh!)
+
+***
+
+### NEXT TIME
+
+***
+
+### NEXT TIME
+
+***
+
+### NEXT TIME
+
+***
+
+## Recursion
+
+In F# lot of problems are dealt with recursion,<br>
+and pattern matching:
+
+```fsharp
+let rec sum list =
+    match list with | [] -> 0 | head :: tail -> h + sum tail
+```
+
+(this is not the best implementation, though)
+
+***
+
+## Composition and abstraction reuse
+
+```javascript
+function sum(numbers) {
+    let result = numbers[0];
+    for (let i = 1; i < numbers.length; i++) {
+        result = result + numbers[i];
+    }
+    return result;
+}
+```
+
+---
+
+```javascript
+function concat(strings) {
+    let result = strings[0];
+    for (let i = 1; i < strings.length; i++) {
+        result = result + strings[i];
+    }
+    return result;
+}
+```
+
+---
+
+```javascript
+function min(values) {
+    let result = values[0];
+    for (let i = 1; i < values.length; i++) {
+        result = values[i] < result ? values[i] : result;
+    }
+    return result;
+}
+```
+
+Do they look the same?
+
+---
+
+They do:
+
+```javascript
+function reduce(values, reducer) {
+    let result = values[0];
+    for (let i = 1; i < values.length; i++) {
+        result = reducer(result, values[i]);
+    }
+    return result;
+}
+```
+
+---
+
+so:
+
+```javascript
+const sum = numbers => reduce(numbers, (a, b) => a + b);
+const concat = strings => reduce(strings, (a, b) => a + b);
+const min = values => reduce(values, (a, b) => b < a ? b : a);
+
+sum([1, 2, 3]) // 6
+concat(["a", "b", "c"]) // "abc"
+min([1, -5, 2]) // -5
+```
+
+---
 
 ### Single case unions
 
@@ -1262,31 +1781,6 @@ if it wasn't correct.
 ## bait and switch
 
 ## for
-
-## recursion
-
-
-## Composition and abstraction reuse
-
-```javascript
-function sum(numbers) {
-    let result = 0;
-    for (let i = 0; i < numbers.length; i++) {
-        result = result + numbers[i];
-    }
-    return result;
-}
-```
-
-```javascript
-function concat(strings) {
-    let result = "";
-    for (let i = 0; i < numbers.length; i++) {
-        result = result + strings[i];
-    }
-    return result;
-}
-```
 
 reduce: max, sum, join,
 
